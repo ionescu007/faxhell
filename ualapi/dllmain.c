@@ -860,7 +860,7 @@ WorkCallback (
     }
 
     //
-    // Get the address of TransmitPacket
+    // Get the address of TransmitPackets
     //
     sockErr = WSAIoctl(listenSocket,
                        SIO_GET_EXTENSION_FUNCTION_POINTER,
