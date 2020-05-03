@@ -3,6 +3,8 @@ A Proof-of-Concept bind shell using the `Fax` service and a DLL hijack based on 
 
 See our writeup at: https://windows-internals.com/faxing-your-way-to-system/
 
+![Obligatory Demo](https://windows-internals.com/wp-content/uploads/2020/04/port_bind_connect.png)
+
 ## How to use
 * Build `Ualapi.dll` and place in `c:\windows\system32`
 * Start the `Fax` service, which will load the DLL and call the export `UalStart`. `UalStart` will queue a thread pool work item that will open a handle to `RpcSs`, find a `SYSTEM` token, and then impersonate it. Afterward, it will create a socket on the local endpoint address, bind it to port `9299`, and then asynchronously wait for a connection using a thread pool I/O completion port.
