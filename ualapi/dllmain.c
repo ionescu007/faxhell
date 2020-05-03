@@ -1109,7 +1109,7 @@ UalStart (
     PTP_WORK work;
     PTP_POOL pool;
     PTP_CLEANUP_GROUP cleanupGroup;
-    HRESULT status;
+    HRESULT hResult;
 
     //
     // Prepare for failure
@@ -1150,7 +1150,7 @@ UalStart (
         //
         // Execute the work callback that will take care of
         //
-        work = CreateThreadpoolWork(WorkCallback, &status, &CallBackEnviron);
+        work = CreateThreadpoolWork(WorkCallback, &hResult, &CallBackEnviron);
         if (work == NULL)
         {
             goto Failure;
@@ -1161,7 +1161,7 @@ UalStart (
         //
         SubmitThreadpoolWork(work);
         WaitForThreadpoolWorkCallbacks(work, FALSE);
-        if (status != ERROR_SUCCESS)
+        if (FAILED(hResult))
         {
             break;
         }
