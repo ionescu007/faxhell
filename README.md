@@ -9,7 +9,7 @@ See our writeup at: https://windows-internals.com/faxing-your-way-to-system/
 * Build `Ualapi.dll` and place in `c:\windows\system32`
 * Start the `Fax` service, which will load the DLL and call the export `UalStart`. `UalStart` will queue a thread pool work item that will open a handle to `RpcSs`, find a `SYSTEM` token, and then impersonate it. Afterward, it will create a socket on the local endpoint address, bind it to port `9299`, and then asynchronously wait for a connection using a thread pool I/O completion port.
 * Connect to the socket on port 9299 using your favorite client (such `nc(at).exe <ip> 9299`) and then type `let me in` and press `ENTER`. If you're writing custom code, make sure to send the string `let me in\n`.
-* The I/O completion packet will then execute the thread pool callback function which will start a `Cmd.exe` process under the `DcomLaunch` service with `SYSTEM` privileges, binding its input and output handles to the newly created socket.
+* The I/O completion packet will then wake up the thread pool callback, which will start a `Cmd.exe` process under the `DcomLaunch` service with `SYSTEM` privileges, binding its input and output handles to the newly created socket.
 * Win!
   
 ## EDR / AV evasion
