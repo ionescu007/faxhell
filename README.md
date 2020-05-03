@@ -1,5 +1,6 @@
 # faxhell ("Fax Shell")
 A Bind Shell Using the Fax Service and a DLL Hijack
+Writeup: https://windows-internals.com/faxing-your-way-to-system/
 
 ## How to use
 * Build ualapi.dll and place in c:\Windows\System32
