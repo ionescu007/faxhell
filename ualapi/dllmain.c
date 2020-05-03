@@ -763,7 +763,6 @@ WorkCallback (
     // Prepare for cleanup
     //
     UNREFERENCED_PARAMETER(Work);
-    UNREFERENCED_PARAMETER(Context);
     UNREFERENCED_PARAMETER(Instance);
     needRevert = FALSE;
     acceptContext = NULL;
@@ -816,6 +815,7 @@ WorkCallback (
     sockErr = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (sockErr != ERROR_SUCCESS)
     {
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         goto Failure;
     }
 
@@ -830,6 +830,7 @@ WorkCallback (
                              WSA_FLAG_OVERLAPPED);
     if (listenSocket == INVALID_SOCKET)
     {
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         goto Failure;
     }
 
@@ -839,6 +840,7 @@ WorkCallback (
     localSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
     if (localSocket == INVALID_SOCKET)
     {
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         goto Failure;
     }
 
@@ -856,6 +858,7 @@ WorkCallback (
                        NULL);
     if (sockErr != ERROR_SUCCESS)
     {
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         goto Failure;
     }
 
@@ -873,6 +876,7 @@ WorkCallback (
                        NULL);
     if (sockErr != ERROR_SUCCESS)
     {
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         goto Failure;
     }
 
@@ -900,6 +904,7 @@ WorkCallback (
                            DUPLICATE_SAME_ACCESS);
     if (bRes == FALSE)
     {
+        hResult = HRESULT_FROM_WIN32(GetLastError());
         goto Failure;
     }
 
@@ -919,6 +924,7 @@ WorkCallback (
                               sizeof(*acceptContext));
     if (acceptContext == NULL)
     {
+        hResult = HRESULT_FROM_WIN32(GetLastError());
         goto Failure;
     }
 
@@ -936,6 +942,7 @@ WorkCallback (
                               &CallBackEnviron);
     if (tpIo == NULL)
     {
+        hResult = HRESULT_FROM_WIN32(GetLastError());
         goto Failure;
     }
 
@@ -949,6 +956,7 @@ WorkCallback (
     sockErr = GetAddrInfoW(NULL, L"9299", &addrHints, &pResult);
     if (sockErr != ERROR_SUCCESS)
     {
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         goto Failure;
     }
 
@@ -959,6 +967,7 @@ WorkCallback (
     FreeAddrInfoW(pResult);
     if (sockErr != ERROR_SUCCESS)
     {
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         goto Failure;
     }
 
@@ -968,6 +977,7 @@ WorkCallback (
     sockErr = listen(listenSocket, 100);
     if (sockErr != ERROR_SUCCESS)
     {
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         goto Failure;
     }
 
@@ -994,6 +1004,7 @@ WorkCallback (
         //
         // Cancel the pumped I/O we pushed with the StartThreadpoolIo earlier
         //
+        hResult = HRESULT_FROM_WIN32(WSAGetLastError());
         CancelThreadpoolIo(tpIo);
         goto Failure;
     }
@@ -1013,8 +1024,10 @@ WorkCallback (
     // Wait for the I/O callback to complete
     //
     WaitForThreadpoolIoCallbacks(tpIo, FALSE);
+    hResult = ERROR_SUCCESS;
 
 Failure:
+    *(HRESULT*)Context = hResult;
     //
     // Drop impersonation if needed
     //
@@ -1096,6 +1109,7 @@ UalStart (
     PTP_WORK work;
     PTP_POOL pool;
     PTP_CLEANUP_GROUP cleanupGroup;
+    HRESULT status;
 
     //
     // Prepare for failure
@@ -1136,7 +1150,7 @@ UalStart (
         //
         // Execute the work callback that will take care of
         //
-        work = CreateThreadpoolWork(WorkCallback, NULL, &CallBackEnviron);
+        work = CreateThreadpoolWork(WorkCallback, &status, &CallBackEnviron);
         if (work == NULL)
         {
             goto Failure;
@@ -1147,6 +1161,10 @@ UalStart (
         //
         SubmitThreadpoolWork(work);
         WaitForThreadpoolWorkCallbacks(work, FALSE);
+        if (status != ERROR_SUCCESS)
+        {
+            break;
+        }
 
         //
         // We're done with this work
