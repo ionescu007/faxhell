@@ -17,7 +17,7 @@ See our writeup at: https://windows-internals.com/faxing-your-way-to-system/
 * Uses the Windows thread pool API to do setup, making stacks harder to read, offloading work through multiple threads, and avoiding easy "hints" that something suspicious is happening.
 * The lifetime of the impersonated tokens is very small, and only the worker thread ever runs as `SYSTEM`, reverting back to `NETWORK SERVICE` very quickly and after only doing one API call. This helps reduce the chance of getting caught by various scanners.
 * Uses uncommon socket APIs that make the import table less suspicious and avoids EDR detections, IOCTL hooks, and LSPs.
-* Crates the bind shell under the `DcomLaunch` service (which is already a `SYSTEM` service) and not under the `Fax` service, making it look a lot more natural and avoiding a very suspicious-looking process tree.
+* Creates the bind shell under the `DcomLaunch` service (which is already a `SYSTEM` service) and not under the `Fax` service, making it look a lot more natural and avoiding a very suspicious-looking process tree.
 * Leverages a Windows bug that makes it look as if our socket belongs to the `Fax` service, and not to `DcomLaunch` or `Cmd.exe`. If we kill the `Fax` service it looks like socket belongs to `System`.
 
 ## Caveats
